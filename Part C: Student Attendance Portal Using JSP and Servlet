@@ -1,0 +1,97 @@
+CREATE DATABASE school;
+USE school;
+
+CREATE TABLE student (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50),
+    attendance VARCHAR(10)
+);
+
+INSERT INTO student (name, attendance) VALUES
+('Amit Sharma', 'Present'),
+('Riya Verma', 'Absent'),
+('Karan Gupta', 'Present');
+
+
+
+
+package com.example;
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.*;
+import java.io.*;
+import java.sql.*;
+import java.util.*;
+
+@WebServlet("/AttendanceServlet")
+public class AttendanceServlet extends HttpServlet {
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/school";
+    private static final String USER = "root";
+    private static final String PASS = "yourpassword";
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        List<Student> students = new ArrayList<>();
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(JDBC_URL, USER, PASS);
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT * FROM student");
+
+            while (rs.next()) {
+                students.add(new Student(rs.getInt("id"),
+                                         rs.getString("name"),
+                                         rs.getString("attendance")));
+            }
+            con.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        request.setAttribute("students", students);
+        RequestDispatcher rd = request.getRequestDispatcher("attendance.jsp");
+        rd.forward(request, response);
+    }
+}
+
+class Student {
+    private int id;
+    private String name;
+    private String attendance;
+    public Student(int id, String name, String attendance) {
+        this.id = id;
+        this.name = name;
+        this.attendance = attendance;
+    }
+    public int getId() { return id; }
+    public String getName() { return name; }
+    public String getAttendance() { return attendance; }
+}
+
+
+
+<%@ page language="java" contentType="text/html; charset=UTF-8" %>
+<html>
+<head><title>Student Attendance</title></head>
+<body>
+  <h2>Attendance Portal</h2>
+  <table border="1">
+    <tr><th>ID</th><th>Name</th><th>Status</th></tr>
+    <%
+      java.util.List<com.example.Student> students =
+          (java.util.List<com.example.Student>) request.getAttribute("students");
+      for (com.example.Student s : students) {
+    %>
+      <tr>
+        <td><%= s.getId() %></td>
+        <td><%= s.getName() %></td>
+        <td><%= s.getAttendance() %></td>
+      </tr>
+    <% } %>
+  </table>
+</body>
+</html>
+

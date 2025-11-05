@@ -1,0 +1,57 @@
+CREATE DATABASE company;
+USE company;
+
+CREATE TABLE employee (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(50),
+    department VARCHAR(50),
+    salary DOUBLE
+);
+
+INSERT INTO employee (name, department, salary) VALUES
+('John Doe', 'IT', 60000),
+('Jane Smith', 'HR', 55000),
+('Raj Patel', 'Finance', 70000);
+package com.example;
+
+import jakarta.servlet.*;
+import jakarta.servlet.http.*;
+import jakarta.servlet.annotation.*;
+import java.io.*;
+import java.sql.*;
+
+@WebServlet("/EmployeeServlet")
+public class EmployeeServlet extends HttpServlet {
+    private static final String JDBC_URL = "jdbc:mysql://localhost:3306/company";
+    private static final String USER = "root";
+    private static final String PASS = "yourpassword";
+
+    @Override
+    protected void doGet(HttpServletRequest req, HttpServletResponse res)
+            throws ServletException, IOException {
+        res.setContentType("text/html");
+        PrintWriter out = res.getWriter();
+
+        out.println("<h2>Employee Records</h2>");
+        out.println("<table border='1'><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr>");
+
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            Connection con = DriverManager.getConnection(JDBC_URL, USER, PASS);
+            Statement st = con.createStatement();
+            ResultSet rs = st.executeQuery("SELECT * FROM employee");
+
+            while (rs.next()) {
+                out.println("<tr><td>" + rs.getInt("id") + "</td><td>" +
+                        rs.getString("name") + "</td><td>" +
+                        rs.getString("department") + "</td><td>" +
+                        rs.getDouble("salary") + "</td></tr>");
+            }
+
+            out.println("</table>");
+            con.close();
+        } catch (Exception e) {
+            out.println("<p>Error: " + e.getMessage() + "</p>");
+        }
+    }
+}
